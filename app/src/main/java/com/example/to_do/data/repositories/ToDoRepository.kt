@@ -2,9 +2,11 @@ package com.example.to_do.data.repositories
 
 import com.example.to_do.data.ToDoDao
 import com.example.to_do.data.models.ToDoTask
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+@ViewModelScoped//TodoRepository(which injected in sharedViewModel) will be alive as long as the shared view model
 class ToDoRepository @Inject constructor(private val toDoDao: ToDoDao){
 
     val getAllTasks: Flow<List<ToDoTask>> = toDoDao.getAllTasks()
