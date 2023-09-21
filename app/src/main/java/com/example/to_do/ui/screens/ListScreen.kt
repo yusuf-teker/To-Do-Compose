@@ -1,0 +1,58 @@
+package com.example.to_do.ui.screens
+
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.to_do.R
+import com.example.to_do.ui.theme.fabBackgroundColor
+import com.example.to_do.util.Constants.CREATE_NEW_TASK_ID
+
+@Composable
+fun ListScreen(
+    navigateToTaskScreen: (taskId: Int) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            ListAppBar(
+                onSearchClicked = {}
+            )
+        },
+        floatingActionButton = {
+            ListFab(onFabClicked = navigateToTaskScreen)
+        }
+    ) {
+        it
+    }
+}
+
+@Composable
+fun ListFab(onFabClicked: (taskId: Int) -> Unit) {
+    FloatingActionButton(
+        onClick = {
+            onFabClicked(CREATE_NEW_TASK_ID)
+        },
+        containerColor = MaterialTheme.colorScheme.fabBackgroundColor,
+        shape = CircleShape
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Add,
+            contentDescription = stringResource(R.string.add_button),
+            tint = Color.White,
+        )
+    }
+}
+
+
+@Composable
+@Preview
+private fun ListScreenPreview() {
+    ListScreen(navigateToTaskScreen = {})
+}
