@@ -1,4 +1,4 @@
-package com.example.to_do.ui.screens
+package com.example.to_do.ui.screens.list
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
