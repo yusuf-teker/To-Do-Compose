@@ -1,6 +1,5 @@
 package com.example.to_do.navigation.destinations
 
-import android.app.TaskStackBuilder
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
@@ -22,6 +21,6 @@ fun NavGraphBuilder.taskComposable(
         })
     ){ navBackStackEntry ->
         val taskId: Int = navBackStackEntry.arguments!!.getInt(TASK_ARGUMENT_KEY)
-        TaskScreen()
+        TaskScreen( navigateToListScreen , taskId, sharedViewModel)
     }
 }

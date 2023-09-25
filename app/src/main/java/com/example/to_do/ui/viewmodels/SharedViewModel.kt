@@ -41,6 +41,8 @@ class SharedViewModel @Inject constructor(
     private val _allTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
     val allTasks: StateFlow<RequestState<List<ToDoTask>>> = _allTasks
 
+    private val _selectedTask: MutableStateFlow<RequestState<ToDoTask?>> = MutableStateFlow(RequestState.Idle)
+    val selectedTask: StateFlow<RequestState<ToDoTask?>> = _selectedTask
 
     fun getAllTask() {
         //viewModelScope is a coroutine scope which tied to lifecycle of sharedViewModel
@@ -88,9 +90,17 @@ class SharedViewModel @Inject constructor(
         }
     }
 
+
     fun getSelectedTask(taskId: Int) {
-        viewModelScope.launch {
-            toDoRepository.getSelectedTask(taskId)
+        try {
+            viewModelScope.launch {
+                _selectedTask.value = RequestState.Loading
+                toDoRepository.getSelectedTask(taskId).collect{ selectedTask ->
+                    _selectedTask.value = RequestState.Success(selectedTask)
+                }
+            }
+        }catch (e: Exception){
+            _selectedTask.value = RequestState.Error(e)
         }
     }
 

@@ -57,7 +57,6 @@ fun ListAppBar(
         SearchAppBarState.CLOSED -> {
             DefaultListAppBar(
                 onSearchClicked = {
-
                     sharedViewModel.setSearchAppBarState(SearchAppBarState.OPENED)
                 },
                 onSortClicked = {},
