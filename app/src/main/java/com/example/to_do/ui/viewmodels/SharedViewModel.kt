@@ -7,11 +7,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.to_do.data.models.ToDoTask
 import com.example.to_do.data.repositories.ToDoRepository
+import com.example.to_do.util.RequestState
 import com.example.to_do.util.SearchAppBarState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.lang.Exception
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,31 +23,76 @@ class SharedViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-    private val _searchAppBarState : MutableState<SearchAppBarState> = mutableStateOf(SearchAppBarState.CLOSED)
+    private val _searchAppBarState: MutableState<SearchAppBarState> =
+        mutableStateOf(SearchAppBarState.CLOSED)
     val searchAppBarState: State<SearchAppBarState> = _searchAppBarState
 
     private val _searchTextState: MutableState<String> = mutableStateOf("")
     val searchTextState: State<String> = _searchTextState
 
-    fun setSearchTextState(text: String){
+    fun setSearchTextState(text: String) {
         _searchTextState.value = text
     }
 
-    fun setSearchAppBarState(searchAppBarState: SearchAppBarState){
+    fun setSearchAppBarState(searchAppBarState: SearchAppBarState) {
         _searchAppBarState.value = searchAppBarState
     }
 
-    private val _allTasks = MutableStateFlow<List<ToDoTask>>(emptyList())
-    val allTasks: StateFlow<List<ToDoTask>> = _allTasks
+    private val _allTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
+    val allTasks: StateFlow<RequestState<List<ToDoTask>>> = _allTasks
 
 
-    fun getAllTask(){
+    fun getAllTask() {
         //viewModelScope is a coroutine scope which tied to lifecycle of sharedViewModel
-        viewModelScope.launch {
-            toDoRepository.getAllTasks.collect{
-                _allTasks.value = it
+        try {
+            viewModelScope.launch {
+                _allTasks.value = RequestState.Loading
+                delay(1000)
+                toDoRepository.getAllTasks.collect {
+                    _allTasks.value = RequestState.Success(it)
+                }
             }
+        } catch (e: Exception) {
+            _allTasks.value = RequestState.Error(e)
+        }
+
+    }
+
+    fun addTask(toDoTask: ToDoTask) {
+        viewModelScope.launch {
+            toDoRepository.addTask(toDoTask)
         }
     }
+
+    fun deleteTask(toDoTask: ToDoTask) {
+        viewModelScope.launch {
+            toDoRepository.deleteTask(toDoTask = toDoTask)
+        }
+    }
+
+    fun deleteAllTask() {
+        viewModelScope.launch {
+            toDoRepository.deleteAllTask()
+        }
+    }
+
+    fun searchDatabase(searchText: String) {
+        viewModelScope.launch {
+            toDoRepository.searchDatabase(query = searchText)
+        }
+    }
+
+    fun updateTask(toDoTask: ToDoTask) {
+        viewModelScope.launch {
+            toDoRepository.updateTask(toDoTask)
+        }
+    }
+
+    fun getSelectedTask(taskId: Int) {
+        viewModelScope.launch {
+            toDoRepository.getSelectedTask(taskId)
+        }
+    }
+
 
 }

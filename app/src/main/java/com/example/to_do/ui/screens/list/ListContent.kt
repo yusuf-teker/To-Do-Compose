@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,36 +18,61 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.to_do.components.Loading
 import com.example.to_do.data.models.Priority
 import com.example.to_do.data.models.ToDoTask
 import com.example.to_do.ui.theme.LARGE_PADDING
 import com.example.to_do.ui.theme.PRIORITY_INDICATOR_SIZE
 import com.example.to_do.ui.theme.TASK_ITEM_ELEVATION
+import com.example.to_do.ui.theme.TOP_APP_BAR_HEIGHT
 import com.example.to_do.ui.theme.taskItemBackgroundColor
 import com.example.to_do.ui.theme.taskItemTitleColor
+import com.example.to_do.util.RequestState
 
 
 @Composable
-fun ListContent()    {
-
+fun ListContent(
+    tasks: RequestState<List<ToDoTask>>, navigateToTaskScreen: (taskId: Int) -> Unit
+) {
+    if (tasks is RequestState.Success) {
+        if (tasks.data.isEmpty()) {
+            EmptyListContent()
+        } else {
+            DisplayTasks(taskList = tasks.data, navigateToTaskScreen = navigateToTaskScreen)
+        }
+    }else if (tasks is RequestState.Loading){
+        Loading()
+    }
 }
 
+@Composable
+fun DisplayTasks(
+    taskList: List<ToDoTask>, navigateToTaskScreen: (taskId: Int) -> Unit
+) {
+    LazyColumn(modifier = Modifier.padding(top = TOP_APP_BAR_HEIGHT)) {
+        items(taskList.size, key = {
+            taskList[it].id
+        }
+
+        ) {
+            TaskItem(toDoTask = taskList[it], navigateToTaskScreen = navigateToTaskScreen)
+        }
+
+    }
+}
 
 @Composable
 fun TaskItem(
-    toDoTask: ToDoTask,
-    navigateToTaskScreen: (taskId: Int) -> Unit
-){
+    toDoTask: ToDoTask, navigateToTaskScreen: (taskId: Int) -> Unit
+) {
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
+    Surface(modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.taskItemBackgroundColor,
         shape = RectangleShape,
         shadowElevation = TASK_ITEM_ELEVATION,
         onClick = {
             navigateToTaskScreen(toDoTask.id)
-        }
-    ) {
+        }) {
 
         Column(
             modifier = Modifier
@@ -62,15 +88,12 @@ fun TaskItem(
                     maxLines = 1,
                     modifier = Modifier.weight(1f)
                 )
-                Box{
-                    Canvas(
-                        modifier = Modifier.size(PRIORITY_INDICATOR_SIZE),
-                        onDraw = {
-                            drawCircle(
-                                color = toDoTask.priority.color
-                            )
-                        }
-                    )
+                Box {
+                    Canvas(modifier = Modifier.size(PRIORITY_INDICATOR_SIZE), onDraw = {
+                        drawCircle(
+                            color = toDoTask.priority.color
+                        )
+                    })
                 }
             }
             Text(
@@ -89,6 +112,8 @@ fun TaskItem(
 
 @Composable
 @Preview
-fun TaskItemPreview(){
-    TaskItem(toDoTask = ToDoTask(0,"title1","description sadasda asdas1231 23asdad", Priority.HIGH), navigateToTaskScreen = {})
+fun TaskItemPreview() {
+    TaskItem(toDoTask = ToDoTask(
+        0, "title1", "description sadasda asdas1231 23asdad", Priority.HIGH
+    ), navigateToTaskScreen = {})
 }
