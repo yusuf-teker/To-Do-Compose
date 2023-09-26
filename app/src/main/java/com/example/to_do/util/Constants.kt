@@ -11,5 +11,5 @@ object Constants {
     const val TASK_ARGUMENT_KEY = "taskId"
 
     const val CREATE_NEW_TASK_ID = -1
-
+    const val MAX_TASK_TITLE_LENGTH = 30
 }

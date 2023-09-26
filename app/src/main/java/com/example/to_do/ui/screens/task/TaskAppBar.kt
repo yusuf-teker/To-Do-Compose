@@ -25,10 +25,12 @@ import com.example.to_do.util.RequestState
 
 @Composable
 fun TaskAppBar(navigateToListScreen: (Action) -> Unit, selectedTask: RequestState<ToDoTask?>) {
-    if (selectedTask is RequestState.Loading || (selectedTask is RequestState.Success && selectedTask.data == null)){
+    if (selectedTask is RequestState.Idle || selectedTask is RequestState.Loading || (selectedTask is RequestState.Success && selectedTask.data == null)){
         NewTaskAppBar(navigateToListScreen)
     }else if (selectedTask is RequestState.Success && selectedTask.data!=null) {
         ExistingTaskAppBar(selectedTask.data, navigateToListScreen)
+    }else{
+        NewTaskAppBar(navigateToListScreen)
     }
 
 }

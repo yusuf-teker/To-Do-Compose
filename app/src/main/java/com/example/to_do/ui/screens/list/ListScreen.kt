@@ -27,7 +27,6 @@ fun ListScreen(
     sharedViewModel: SharedViewModel
 ) {
     LaunchedEffect(key1 = false, block = {sharedViewModel.getAllTask()})
-
     val allTasks: RequestState<List<ToDoTask>> by sharedViewModel.allTasks.collectAsState()
     val searchAppBarState: SearchAppBarState by sharedViewModel.searchAppBarState
     val searchTextState: String by sharedViewModel.searchTextState

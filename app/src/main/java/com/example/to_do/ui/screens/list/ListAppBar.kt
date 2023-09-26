@@ -1,6 +1,7 @@
 package com.example.to_do.ui.screens.list
 
 
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -53,8 +54,9 @@ fun ListAppBar(
     searchAppBarState: SearchAppBarState,
     searchTextState: String
 ) {
+    Log.d("ListAppBar searchAppBarState -> ", "$searchAppBarState")
     when (searchAppBarState) {
-        SearchAppBarState.CLOSED -> {
+        SearchAppBarState.CLOSED, -> {
             DefaultListAppBar(
                 onSearchClicked = {
                     sharedViewModel.setSearchAppBarState(SearchAppBarState.OPENED)
