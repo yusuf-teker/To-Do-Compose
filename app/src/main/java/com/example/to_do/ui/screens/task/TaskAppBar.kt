@@ -112,7 +112,7 @@ fun AddAction(
 fun CloseAction(
     onCloseClicked: (Action) -> Unit
 ){
-    IconButton(onClick = { onCloseClicked(Action.ADD) }) {
+    IconButton(onClick = { onCloseClicked(Action.NO_ACTION) }) {
         Icon(
             imageVector = Icons.Filled.Close,
             contentDescription = "Close Button",

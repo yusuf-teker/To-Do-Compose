@@ -27,7 +27,7 @@ interface ToDoDao {
     @Query ("DELETE FROM todo_table")
     suspend fun deleteAllTasks()
 
-    @Update
+    @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateTask(toDoTask: ToDoTask)
 
     @Query("SELECT * FROM todo_table WHERE title LIKE :searchQuery OR description LIKE :searchQuery")

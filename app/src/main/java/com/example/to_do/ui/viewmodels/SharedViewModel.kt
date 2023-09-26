@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.to_do.data.models.Priority
 import com.example.to_do.data.models.ToDoTask
 import com.example.to_do.data.repositories.ToDoRepository
+import com.example.to_do.util.Action
 import com.example.to_do.util.Constants
 import com.example.to_do.util.RequestState
 import com.example.to_do.util.SearchAppBarState
@@ -45,6 +46,9 @@ class SharedViewModel @Inject constructor(
 
     private val _selectedTask: MutableStateFlow<RequestState<ToDoTask?>> = MutableStateFlow(RequestState.Idle)
     val selectedTask: StateFlow<RequestState<ToDoTask?>> = _selectedTask
+
+    private val _action = MutableStateFlow<Action>(Action.NO_ACTION)
+    val action : StateFlow<Action> = _action
 
     /* New Task*/
     private val _newTaskId: MutableState<Int> = mutableIntStateOf(0)
@@ -93,7 +97,7 @@ class SharedViewModel @Inject constructor(
     }
 
     fun validateFields(): Boolean{
-        return _newTaskTitle.value.isNotEmpty() && _newTaskTitle.value.isNotEmpty()
+        return _newTaskTitle.value.isNotEmpty() && _newTaskDescription.value.isNotEmpty()
     }
     /* New Task End*/
 
@@ -114,15 +118,42 @@ class SharedViewModel @Inject constructor(
 
     }
 
-    fun addTask(toDoTask: ToDoTask) {
+    fun addTask() {
         viewModelScope.launch {
-            toDoRepository.addTask(toDoTask)
+            if (validateFields()){
+                toDoRepository.addTask(
+                        ToDoTask(
+                            title = _newTaskTitle.value,
+                            description = _newTaskDescription.value,
+                            priority = _newTaskPriority.value
+                        )
+
+                )
+                clearNewTaskState()
+            }
         }
+
     }
 
-    fun deleteTask(toDoTask: ToDoTask) {
+    fun handleDatabaseAction(action: Action){
+
+        _action.value = action
+
+         when(action){
+            Action.ADD -> addTask()
+            Action.UPDATE -> updateTask()
+            Action.DELETE -> deleteTask()
+             Action.DELETE_ALL -> deleteAllTask()
+             Action.UNDO -> {}
+            else -> {}
+        }
+    }
+    fun deleteTask() {
         viewModelScope.launch {
-            toDoRepository.deleteTask(toDoTask = toDoTask)
+            if (_selectedTask.value is RequestState.Success){
+                toDoRepository.deleteTask((_selectedTask.value as RequestState.Success<ToDoTask?>).data!!)
+            }
+
         }
     }
 
@@ -138,10 +169,22 @@ class SharedViewModel @Inject constructor(
         }
     }
 
-    fun updateTask(toDoTask: ToDoTask) {
-        viewModelScope.launch {
-            toDoRepository.updateTask(toDoTask)
+    fun updateTask() {
+        if (validateFields()){
+            viewModelScope.launch {
+                toDoRepository.updateTask(
+                    ToDoTask(
+                        id = _newTaskId.value,
+                        title = _newTaskTitle.value,
+                        description = _newTaskDescription.value,
+                        priority = _newTaskPriority.value
+                    )
+                )
+                clearNewTaskState()
+            }
+
         }
+
     }
 
 
