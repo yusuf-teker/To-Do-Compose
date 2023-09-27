@@ -50,37 +50,27 @@ import com.example.to_do.util.TrailingIconState
 
 @Composable
 fun ListAppBar(
-    sharedViewModel: SharedViewModel,
-    searchAppBarState: SearchAppBarState,
-    searchTextState: String
+    sharedViewModel: SharedViewModel, searchAppBarState: SearchAppBarState, searchTextState: String
 ) {
     Log.d("ListAppBar searchAppBarState -> ", "$searchAppBarState")
     when (searchAppBarState) {
-        SearchAppBarState.CLOSED, -> {
-            DefaultListAppBar(
-                onSearchClicked = {
-                    sharedViewModel.setSearchAppBarState(SearchAppBarState.OPENED)
-                },
-                onSortClicked = {},
-                onDeleteAllClicked = {}
-            )
+        SearchAppBarState.CLOSED -> {
+            DefaultListAppBar(onSearchClicked = {
+                sharedViewModel.setSearchAppBarState(SearchAppBarState.OPENED)
+            }, onSortClicked = {}, onDeleteAllClicked = {})
         }
 
         else -> {
-            SearchAppBar(
-                text = searchTextState,
-                onTextChange = { newText ->
-                   sharedViewModel.setSearchTextState(newText)
-                },
+            SearchAppBar(text = searchTextState, onTextChange = { newText ->
+                sharedViewModel.setSearchTextState(newText)
+                sharedViewModel.searchDatabase(newText)
+            },
 
                 onSearchClicked = {
-
-                },
-                onCloseClicked = {
-                    sharedViewModel.setSearchAppBarState(SearchAppBarState.CLOSED)
-                    sharedViewModel.setSearchTextState("")
-                }
-            )
+                    sharedViewModel.searchDatabase(it)
+                }, onCloseClicked = {
+                    sharedViewModel.clearSearchAppBarState()
+                })
         }
     }
 }
@@ -88,15 +78,12 @@ fun ListAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultListAppBar(
-    onSearchClicked: () -> Unit,
-    onSortClicked: (Priority) -> Unit,
-    onDeleteAllClicked: () -> Unit
+    onSearchClicked: () -> Unit, onSortClicked: (Priority) -> Unit, onDeleteAllClicked: () -> Unit
 ) {
 
-    TopAppBar(
-        title = {
-            Text(text = "Tasks", color = MaterialTheme.colorScheme.topAppBarContentColor)
-        },
+    TopAppBar(title = {
+        Text(text = "Tasks", color = MaterialTheme.colorScheme.topAppBarContentColor)
+    },
         colors = topAppBarColors(containerColor = MaterialTheme.colorScheme.topAppBarBackgroundColor),
         actions = {
             ListAppBarActions(onSearchClicked, onSortClicked, onDeleteAllClicked)
@@ -107,9 +94,7 @@ fun DefaultListAppBar(
 
 @Composable
 fun ListAppBarActions(
-    onSearchClicked: () -> Unit,
-    onSortClicked: (Priority) -> Unit,
-    onDeleteAllClicked: () -> Unit
+    onSearchClicked: () -> Unit, onSortClicked: (Priority) -> Unit, onDeleteAllClicked: () -> Unit
 ) {
     SearchAction(onSearchClicked = onSearchClicked)
     SortAction(onSortClicked = onSortClicked)
@@ -130,39 +115,25 @@ fun SearchAction(onSearchClicked: () -> Unit) {
 @Composable
 fun SortAction(onSortClicked: (Priority) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    IconButton(
-        onClick = { expanded = true }
-    ) {
+    IconButton(onClick = { expanded = true }) {
         Icon(
             painter = painterResource(id = R.drawable.ic_filter_list),
             contentDescription = "Sort Tasks",
             tint = MaterialTheme.colorScheme.topAppBarContentColor
         )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = { PriorityItem(priority = Priority.LOW) },
-                onClick = {
-                    expanded = false
-                    onSortClicked(Priority.LOW)
-                }
-            )
-            DropdownMenuItem(
-                text = { PriorityItem(priority = Priority.HIGH) },
-                onClick = {
-                    expanded = false
-                    onSortClicked(Priority.HIGH)
-                }
-            )
-            DropdownMenuItem(
-                text = { PriorityItem(priority = Priority.NONE) },
-                onClick = {
-                    expanded = false
-                    onSortClicked(Priority.NONE)
-                }
-            )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = { PriorityItem(priority = Priority.LOW) }, onClick = {
+                expanded = false
+                onSortClicked(Priority.LOW)
+            })
+            DropdownMenuItem(text = { PriorityItem(priority = Priority.HIGH) }, onClick = {
+                expanded = false
+                onSortClicked(Priority.HIGH)
+            })
+            DropdownMenuItem(text = { PriorityItem(priority = Priority.NONE) }, onClick = {
+                expanded = false
+                onSortClicked(Priority.NONE)
+            })
         }
     }
 }
@@ -172,31 +143,23 @@ fun DeleteAllAction(
     onDeleteAllClicked: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    IconButton(
-        onClick = { expanded = true }
-    ) {
+    IconButton(onClick = { expanded = true }) {
         Icon(
             painter = painterResource(id = R.drawable.ic_vertical_menu),
             contentDescription = stringResource(R.string.delete_all),
             tint = MaterialTheme.colorScheme.topAppBarContentColor
         )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = stringResource(R.string.delete_all),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(LARGE_PADDING)
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onDeleteAllClicked()
-                }
-            )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = {
+                Text(
+                    text = stringResource(R.string.delete_all),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(LARGE_PADDING)
+                )
+            }, onClick = {
+                expanded = false
+                onDeleteAllClicked()
+            })
 
         }
     }
@@ -231,82 +194,60 @@ fun SearchAppBar(
         shadowElevation = 4.dp,
         color = MaterialTheme.colorScheme.topAppBarBackgroundColor
     ) {
-        TextField(
-            modifier = Modifier
-                .fillMaxWidth(),
-            value = text,
-            onValueChange = {
-                onTextChange(it)
-            },
-            placeholder = {
-                Text(
-                    modifier = Modifier
-                        .alpha(ContentAlpha.medium),
-                    text = "Search",
-                    color = Color.White
+        TextField(modifier = Modifier.fillMaxWidth(), value = text, onValueChange = {
+            onTextChange(it)
+        }, placeholder = {
+            Text(
+                modifier = Modifier.alpha(ContentAlpha.medium),
+                text = "Search",
+                color = Color.White
+            )
+        }, textStyle = TextStyle(
+            color = MaterialTheme.colorScheme.topAppBarContentColor,
+            fontSize = MaterialTheme.typography.bodySmall.fontSize
+        ), singleLine = true, leadingIcon = {
+            IconButton(modifier = Modifier.alpha(ContentAlpha.disabled), onClick = {}) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search Icon",
+                    tint = MaterialTheme.colorScheme.topAppBarContentColor
                 )
-            },
-            textStyle = TextStyle(
-                color = MaterialTheme.colorScheme.topAppBarContentColor,
-                fontSize = MaterialTheme.typography.bodySmall.fontSize
-            ),
-            singleLine = true,
-            leadingIcon = {
-                IconButton(
-                    modifier = Modifier
-                        .alpha(ContentAlpha.disabled),
-                    onClick = {}
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Search Icon",
-                        tint = MaterialTheme.colorScheme.topAppBarContentColor
-                    )
-                }
-            },
-            trailingIcon = {
-                IconButton(
-                    onClick = {
-                        when (trailingIconState) {
-                            TrailingIconState.READY_TO_DELETE -> {
-                                onTextChange("")
-                                trailingIconState = TrailingIconState.READY_TO_CLOSE
-                            }
+            }
+        }, trailingIcon = {
+            IconButton(onClick = {
+                when (trailingIconState) {
+                    TrailingIconState.READY_TO_DELETE -> {
+                        onTextChange("")
+                        trailingIconState = TrailingIconState.READY_TO_CLOSE
+                    }
 
-                            TrailingIconState.READY_TO_CLOSE -> {
-                                if (text.isNotEmpty()) {
-                                    onTextChange("")
-                                } else {
-                                    onCloseClicked()
-                                    trailingIconState = TrailingIconState.READY_TO_DELETE
-                                }
-                            }
+                    TrailingIconState.READY_TO_CLOSE -> {
+                        if (text.isNotEmpty()) {
+                            onTextChange("")
+                        } else {
+                            onCloseClicked()
+                            trailingIconState = TrailingIconState.READY_TO_DELETE
                         }
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close Icon",
-                        tint = MaterialTheme.colorScheme.topAppBarContentColor
-                    )
                 }
-            },
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {//keyboardSearchClicked
-                    onSearchClicked(text)
-                }
-            ),
-            colors = TextFieldDefaults.colors(
-                cursorColor = MaterialTheme.colorScheme.topAppBarContentColor,
-                focusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent
-            )
-        )
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Close Icon",
+                    tint = MaterialTheme.colorScheme.topAppBarContentColor
+                )
+            }
+        }, keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Search
+        ), keyboardActions = KeyboardActions(onSearch = {//keyboardSearchClicked
+            onSearchClicked(text)
+        }), colors = TextFieldDefaults.colors(
+            cursorColor = MaterialTheme.colorScheme.topAppBarContentColor,
+            focusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent
+        ))
     }
 }

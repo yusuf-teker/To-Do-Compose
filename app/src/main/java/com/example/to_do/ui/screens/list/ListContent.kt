@@ -32,6 +32,23 @@ import com.example.to_do.util.RequestState
 
 @Composable
 fun ListContent(
+    tasks: RequestState<List<ToDoTask>>,
+    searchTasks: RequestState<List<ToDoTask>>,
+    searchText: String,
+    navigateToTaskScreen: (taskId: Int) -> Unit
+) {
+
+    if (searchText.isNotEmpty()) {
+        HandleListContent(searchTasks, navigateToTaskScreen)
+    } else {
+        HandleListContent(tasks, navigateToTaskScreen)
+    }
+
+
+}
+
+@Composable
+fun HandleListContent(
     tasks: RequestState<List<ToDoTask>>, navigateToTaskScreen: (taskId: Int) -> Unit
 ) {
     if (tasks is RequestState.Success) {
@@ -40,7 +57,7 @@ fun ListContent(
         } else {
             DisplayTasks(taskList = tasks.data, navigateToTaskScreen = navigateToTaskScreen)
         }
-    }else if (tasks is RequestState.Loading){
+    } else if (tasks is RequestState.Loading) {
         Loading()
     }
 }

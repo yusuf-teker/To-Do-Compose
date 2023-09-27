@@ -35,6 +35,7 @@ fun ListScreen(
 ) {
     LaunchedEffect(key1 = false, block = {sharedViewModel.getAllTask()})
     val allTasks: RequestState<List<ToDoTask>> by sharedViewModel.allTasks.collectAsState()
+    val saarchTasks: RequestState<List<ToDoTask>> by sharedViewModel.searchedTasks.collectAsState()
     val searchAppBarState: SearchAppBarState by sharedViewModel.searchAppBarState
     val searchTextState: String by sharedViewModel.searchTextState
 
@@ -59,12 +60,18 @@ fun ListScreen(
             )
         },
         floatingActionButton = {
-            ListFab(onFabClicked = navigateToTaskScreen)
+            ListFab(onFabClicked ={
+                navigateToTaskScreen(it)
+                sharedViewModel.clearSearchAppBarState()
+                }
+            )
         }
     ) {
         it
         ListContent(
             allTasks,
+            saarchTasks,
+            searchTextState,
             navigateToTaskScreen,
         )
     }

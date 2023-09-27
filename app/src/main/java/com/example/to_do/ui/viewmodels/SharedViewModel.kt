@@ -45,7 +45,11 @@ class SharedViewModel @Inject constructor(
     private val _allTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
     val allTasks: StateFlow<RequestState<List<ToDoTask>>> = _allTasks
 
-    private val _selectedTask: MutableStateFlow<RequestState<ToDoTask?>> = MutableStateFlow(RequestState.Idle)
+    private val _searchedTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
+    val searchedTasks: StateFlow<RequestState<List<ToDoTask>>> = _searchedTasks
+
+    private val _selectedTask: MutableStateFlow<RequestState<ToDoTask?>> =
+        MutableStateFlow(RequestState.Idle)
     val selectedTask: StateFlow<RequestState<ToDoTask?>> = _selectedTask
 
     private val _lastDeletedTask: MutableStateFlow<ToDoTask?> = MutableStateFlow(null)
@@ -53,7 +57,7 @@ class SharedViewModel @Inject constructor(
 
 
     private val _action = MutableStateFlow<Action>(Action.NO_ACTION)
-    val action : StateFlow<Action> = _action
+    val action: StateFlow<Action> = _action
 
     /* New Task*/
     private val _newTaskId: MutableState<Int> = mutableIntStateOf(0)
@@ -71,39 +75,43 @@ class SharedViewModel @Inject constructor(
     fun setNewTaskTitle(taskTitle: String) {
         if (taskTitle.length <= Constants.MAX_TASK_TITLE_LENGTH) _newTaskTitle.value = taskTitle
     }
+
     fun setNewTaskId(taskId: Int) {
         _newTaskId.value = taskId
     }
+
     fun setNewTaskDescription(taskDescription: String) {
         _newTaskDescription.value = taskDescription
     }
+
     fun setNewTaskPriority(taskPriority: Priority) {
         _newTaskPriority.value = taskPriority
     }
-    fun clearNewTaskState(){
+
+    fun clearNewTaskState() {
         _newTaskId.value = 0
         _newTaskTitle.value = ""
         _newTaskDescription.value = ""
         _newTaskPriority.value = Priority.LOW
     }
 
-    fun updateTaskFields(toDoTask: ToDoTask?){
+    fun updateTaskFields(toDoTask: ToDoTask?) {
         clearNewTaskState()
-        if (toDoTask != null){ //Existing Task
+        if (toDoTask != null) { //Existing Task
             fillNewTaskState(toDoTask)
         }
     }
-    fun fillNewTaskState(toDoTask: ToDoTask){
+
+    fun fillNewTaskState(toDoTask: ToDoTask) {
         _newTaskId.value = toDoTask.id
         _newTaskTitle.value = toDoTask.title
         _newTaskDescription.value = toDoTask.description
         _newTaskPriority.value = toDoTask.priority
     }
 
-    fun validateFields(): Boolean{
+    fun validateFields(): Boolean {
         return _newTaskTitle.value.isNotEmpty() && _newTaskDescription.value.isNotEmpty()
-    }
-    /* New Task End*/
+    }/* New Task End*/
 
 
     fun getAllTask() {
@@ -124,13 +132,13 @@ class SharedViewModel @Inject constructor(
 
     fun addTask() {
         viewModelScope.launch {
-            if (validateFields()){
+            if (validateFields()) {
                 toDoRepository.addTask(
-                        ToDoTask(
-                            title = _newTaskTitle.value,
-                            description = _newTaskDescription.value,
-                            priority = _newTaskPriority.value
-                        )
+                    ToDoTask(
+                        title = _newTaskTitle.value,
+                        description = _newTaskDescription.value,
+                        priority = _newTaskPriority.value
+                    )
 
                 )
             }
@@ -138,40 +146,42 @@ class SharedViewModel @Inject constructor(
 
     }
 
-    private fun addTask(toDoTask: ToDoTask){
+    private fun addTask(toDoTask: ToDoTask) {
         viewModelScope.launch {
-           toDoRepository.addTask(toDoTask)
+            toDoRepository.addTask(toDoTask)
         }
     }
 
-    private fun undoTask(){
+    private fun undoTask() {
         viewModelScope.launch {
-            if(_lastDeletedTask.value != null && _action.value == Action.DELETE){
+            if (_lastDeletedTask.value != null && _action.value == Action.DELETE) {
                 addTask(_lastDeletedTask.value!!)
             }
         }
     }
 
-    fun handleDatabaseAction(action: Action){
+    fun handleDatabaseAction(action: Action) {
 
         _action.value = action
-        Log.d("SharedViewModel","handleDatabaseAction - action -> $action ")
+        Log.d("SharedViewModel", "handleDatabaseAction - action -> $action ")
 
-         when(action){
+        when (action) {
             Action.ADD -> addTask()
             Action.UPDATE -> updateTask()
             Action.DELETE -> deleteTask()
-             Action.DELETE_ALL -> deleteAllTask()
-             Action.UNDO -> {}
+            Action.DELETE_ALL -> deleteAllTask()
+            Action.UNDO -> {}
             else -> {}
         }
     }
+
     private fun deleteTask() {
-        Log.d("SharedViewModel","deleteTask - deleted task -> ${_selectedTask.value} ")
+        Log.d("SharedViewModel", "deleteTask - deleted task -> ${_selectedTask.value} ")
         viewModelScope.launch {
-            if (_selectedTask.value is RequestState.Success){
+            if (_selectedTask.value is RequestState.Success) {
                 toDoRepository.deleteTask((_selectedTask.value as RequestState.Success<ToDoTask?>).data!!)
-                _lastDeletedTask.value = (selectedTask.value as RequestState.Success<ToDoTask?>).data!!
+                _lastDeletedTask.value =
+                    (selectedTask.value as RequestState.Success<ToDoTask?>).data!!
             }
 
         }
@@ -183,14 +193,23 @@ class SharedViewModel @Inject constructor(
         }
     }
 
+
     fun searchDatabase(searchText: String) {
-        viewModelScope.launch {
-            toDoRepository.searchDatabase(query = searchText)
+        try {
+            viewModelScope.launch {
+                _searchedTasks.value = RequestState.Loading
+                toDoRepository.searchDatabase(query = "%$searchText%").collect {
+                    _searchedTasks.value = RequestState.Success(it)
+                }
+            }
+        } catch (e: Exception) {
+            _searchedTasks.value = RequestState.Error(e)
         }
+        _searchAppBarState.value = SearchAppBarState.TRIGGERED
     }
 
     private fun updateTask() {
-        if (validateFields()){
+        if (validateFields()) {
             viewModelScope.launch {
                 toDoRepository.updateTask(
                     ToDoTask(
@@ -200,12 +219,6 @@ class SharedViewModel @Inject constructor(
                         priority = _newTaskPriority.value
                     )
                 )
-                Log.d("SharedViewModel","updateTask - updatedTask -> ${ToDoTask(
-                    id = _newTaskId.value,
-                    title = _newTaskTitle.value,
-                    description = _newTaskDescription.value,
-                    priority = _newTaskPriority.value
-                )} ")
             }
 
         }
@@ -214,24 +227,29 @@ class SharedViewModel @Inject constructor(
 
 
     fun getSelectedTask(taskId: Int) {
-        Log.d("SharedViewModel","getSelectedTask - taskId -> ${taskId} ")
+        Log.d("SharedViewModel", "getSelectedTask - taskId -> ${taskId} ")
         try {
             viewModelScope.launch {
                 _selectedTask.value = RequestState.Loading
-                toDoRepository.getSelectedTask(taskId).collect{ selectedTask ->
+                toDoRepository.getSelectedTask(taskId).collect { selectedTask ->
                     _selectedTask.value = RequestState.Success(selectedTask)
                     updateTaskFields(selectedTask)
                 }
             }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             _selectedTask.value = RequestState.Error(e)
             updateTaskFields(null)
         }
     }
 
     fun undoLastDeletedTask() {
-        Log.d("SharedViewModel","undoLastDeletedTask - selectedTask -> ${_selectedTask.value} ")
+        Log.d("SharedViewModel", "undoLastDeletedTask - selectedTask -> ${_selectedTask.value} ")
         undoTask()
+    }
+
+    fun clearSearchAppBarState() {
+        setSearchTextState("")
+        setSearchAppBarState(SearchAppBarState.CLOSED)
     }
 
 
