@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,7 +41,14 @@ fun ListScreen(
     val action: Action by sharedViewModel.action.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    DisplaySnackBack(snackbarHostState,sharedViewModel.newTaskTitle.value,action)
+    DisplaySnackBack(
+        snackbarHostState,
+        sharedViewModel.newTaskTitle.value,
+        action,
+        onUndoClicked = {
+            sharedViewModel.undoLastDeletedTask()
+        }
+    )
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -84,15 +92,23 @@ fun ListFab(onFabClicked: (taskId: Int) -> Unit) {
 fun DisplaySnackBack(
     snackbarHostState: SnackbarHostState,
     taskTitle: String,
-    action: Action
+    action: Action,
+    onUndoClicked: () -> Unit
 ){
     val scope = rememberCoroutineScope()
     LaunchedEffect(key1 = action){
         scope.launch {
-            val snackBarResult = snackbarHostState.showSnackbar(
-                message = "${action.name}: $taskTitle",
-                actionLabel =  "OK"
-            )
+            if (action != Action.NO_ACTION){
+                val snackBarResult = snackbarHostState.showSnackbar(
+                    message = "${action.name}: $taskTitle",
+                    actionLabel =  "OK"
+                )
+
+                if (snackBarResult == SnackbarResult.ActionPerformed && action == Action.DELETE) {
+                    onUndoClicked()
+                }
+            }
+
         }
     }
 }
