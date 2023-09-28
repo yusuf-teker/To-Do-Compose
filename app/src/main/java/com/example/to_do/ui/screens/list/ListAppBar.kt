@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.ContentAlpha
 import com.example.to_do.R
+import com.example.to_do.components.DisplayAlertDialog
 import com.example.to_do.components.PriorityItem
 import com.example.to_do.data.models.Priority
 import com.example.to_do.ui.theme.LARGE_PADDING
@@ -45,6 +46,7 @@ import com.example.to_do.ui.theme.TOP_APP_BAR_HEIGHT
 import com.example.to_do.ui.theme.topAppBarBackgroundColor
 import com.example.to_do.ui.theme.topAppBarContentColor
 import com.example.to_do.ui.viewmodels.SharedViewModel
+import com.example.to_do.util.Action
 import com.example.to_do.util.SearchAppBarState
 import com.example.to_do.util.TrailingIconState
 
@@ -57,7 +59,9 @@ fun ListAppBar(
         SearchAppBarState.CLOSED -> {
             DefaultListAppBar(onSearchClicked = {
                 sharedViewModel.setSearchAppBarState(SearchAppBarState.OPENED)
-            }, onSortClicked = {}, onDeleteAllClicked = {})
+            }, onSortClicked = {}, onDeleteAllClicked = {
+                sharedViewModel.setAction(Action.DELETE_ALL)
+            })
         }
 
         else -> {
@@ -94,11 +98,25 @@ fun DefaultListAppBar(
 
 @Composable
 fun ListAppBarActions(
-    onSearchClicked: () -> Unit, onSortClicked: (Priority) -> Unit, onDeleteAllClicked: () -> Unit
+    onSearchClicked: () -> Unit, onSortClicked: (Priority) -> Unit, onDeleteAllConfirmed: () -> Unit
 ) {
+    var openDeleteAllDialog by remember {
+        mutableStateOf(false)
+    }
+    DisplayAlertDialog(title = "Remove all tasks?",
+        message = "All tasks will be removed. Are you sure?",
+        openDialog = openDeleteAllDialog,
+        onCloseDialog = { openDeleteAllDialog = false },
+        onPositiveButtonClicked = {
+            onDeleteAllConfirmed()
+            openDeleteAllDialog = false
+        }
+
+    )
+
     SearchAction(onSearchClicked = onSearchClicked)
     SortAction(onSortClicked = onSortClicked)
-    DeleteAllAction(onDeleteAllClicked = onDeleteAllClicked)
+    DeleteAllAction(onDeleteAllClicked = {openDeleteAllDialog = true})
 }
 
 @Composable
@@ -248,6 +266,7 @@ fun SearchAppBar(
             unfocusedIndicatorColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
             focusedContainerColor = Color.Transparent
-        ))
+        )
+        )
     }
 }

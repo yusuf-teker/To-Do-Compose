@@ -79,6 +79,10 @@ class SharedViewModel @Inject constructor(
     fun setNewTaskId(taskId: Int) {
         _newTaskId.value = taskId
     }
+    fun setAction(action: Action) {
+        _action.value = action
+        handleDatabaseAction(action)
+    }
 
     fun setNewTaskDescription(taskDescription: String) {
         _newTaskDescription.value = taskDescription
@@ -161,8 +165,6 @@ class SharedViewModel @Inject constructor(
     }
 
     fun handleDatabaseAction(action: Action) {
-
-        _action.value = action
         Log.d("SharedViewModel", "handleDatabaseAction - action -> $action ")
 
         when (action) {
@@ -187,7 +189,7 @@ class SharedViewModel @Inject constructor(
         }
     }
 
-    private fun deleteAllTask() {
+     fun deleteAllTask() {
         viewModelScope.launch {
             toDoRepository.deleteAllTask()
         }

@@ -37,7 +37,7 @@ fun TaskScreen(
 
             TaskAppBar(
                 navigateToListScreen = { action ->
-                    sharedViewModel.handleDatabaseAction(action)
+                    sharedViewModel.setAction(action)
 
                     if (action == Action.NO_ACTION){
                         navigateToListScreen(action)

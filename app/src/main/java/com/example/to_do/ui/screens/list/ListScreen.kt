@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.example.to_do.R
+import com.example.to_do.components.DisplayAlertDialog
 import com.example.to_do.data.models.ToDoTask
 import com.example.to_do.ui.theme.fabBackgroundColor
 import com.example.to_do.ui.viewmodels.SharedViewModel
@@ -107,8 +108,8 @@ fun DisplaySnackBack(
         scope.launch {
             if (action != Action.NO_ACTION){
                 val snackBarResult = snackbarHostState.showSnackbar(
-                    message = "${action.name}: $taskTitle",
-                    actionLabel =  "OK"
+                    message = setSnackbarMessage(action, taskTitle),
+                    actionLabel =  setSnackbarLabel(action, taskTitle)
                 )
 
                 if (snackBarResult == SnackbarResult.ActionPerformed && action == Action.DELETE) {
@@ -117,5 +118,17 @@ fun DisplaySnackBack(
             }
 
         }
+    }
+}
+private fun setSnackbarMessage(action: Action, taskTitle: String): String{
+    return when(action){
+        Action.DELETE_ALL -> "All Tasks Removed."
+        else -> "${action.name}: ${taskTitle}"
+    }
+}
+private fun setSnackbarLabel(action: Action, taskTitle: String): String{
+    return when(action){
+        Action.DELETE -> "UNDO"
+        else -> "OK"
     }
 }

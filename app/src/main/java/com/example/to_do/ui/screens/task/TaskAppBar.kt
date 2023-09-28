@@ -13,8 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.to_do.components.DisplayAlertDialog
 import com.example.to_do.data.models.Priority
 import com.example.to_do.data.models.ToDoTask
 import com.example.to_do.ui.theme.topAppBarBackgroundColor
@@ -79,10 +84,25 @@ fun ExistingTaskAppBar(
             containerColor = MaterialTheme.colorScheme.topAppBarBackgroundColor
         ),
         actions = {
-            DeleteAction(navigateToListScreen)
-            UpdateAction(navigateToListScreen)
+            ExistingTaskAppBarActions(selectedTask, navigateToListScreen)
         }
     )
+}
+
+@Composable
+fun ExistingTaskAppBarActions(
+    selectedTask: ToDoTask,
+    navigateToListScreen: (Action) -> Unit
+){
+    var openDialog by remember {
+        mutableStateOf(false)
+    }
+    
+    DisplayAlertDialog(title = "Remove ${selectedTask.title}?", message = "Are you sure to delete the ${selectedTask.title}?", openDialog = openDialog, onCloseDialog = { openDialog = false }) {
+        navigateToListScreen(Action.DELETE)
+    }
+    DeleteAction( onDeleteClicked = { openDialog = true })
+    UpdateAction(navigateToListScreen)
 }
 @Composable
 fun BackAction(
@@ -123,9 +143,9 @@ fun CloseAction(
 
 @Composable
 fun DeleteAction(
-    onDeleteClicked: (Action) -> Unit
+    onDeleteClicked: () -> Unit
 ){
-    IconButton(onClick = { onDeleteClicked(Action.DELETE) }) {
+    IconButton(onClick = { onDeleteClicked() }) {
         Icon(
             imageVector = Icons.Filled.Delete,
             contentDescription = "Delete Button",
