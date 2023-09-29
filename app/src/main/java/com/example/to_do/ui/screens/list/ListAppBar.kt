@@ -59,7 +59,9 @@ fun ListAppBar(
         SearchAppBarState.CLOSED -> {
             DefaultListAppBar(onSearchClicked = {
                 sharedViewModel.setSearchAppBarState(SearchAppBarState.OPENED)
-            }, onSortClicked = {}, onDeleteAllClicked = {
+            }, onSortClicked = {
+                sharedViewModel.persistSortState(it)
+            }, onDeleteAllClicked = {
                 sharedViewModel.setAction(Action.DELETE_ALL)
             })
         }

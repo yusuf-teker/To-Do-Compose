@@ -32,7 +32,10 @@ import com.example.to_do.util.RequestState
 
 @Composable
 fun ListContent(
-    tasks: RequestState<List<ToDoTask>>,
+    allTasks: RequestState<List<ToDoTask>>,
+    lowPriorityTasks: List<ToDoTask>,
+    highPriorityTasks: List<ToDoTask>,
+    sortState: RequestState<Priority>,
     searchTasks: RequestState<List<ToDoTask>>,
     searchText: String,
     navigateToTaskScreen: (taskId: Int) -> Unit
@@ -41,7 +44,16 @@ fun ListContent(
     if (searchText.isNotEmpty()) {
         HandleListContent(searchTasks, navigateToTaskScreen)
     } else {
-        HandleListContent(tasks, navigateToTaskScreen)
+       if (sortState is RequestState.Success){
+           when(sortState.data){
+               Priority.LOW -> HandleListContent(RequestState.Success(lowPriorityTasks), navigateToTaskScreen)
+               Priority.HIGH -> HandleListContent(RequestState.Success(highPriorityTasks), navigateToTaskScreen)
+               else ->  HandleListContent(allTasks, navigateToTaskScreen)
+           }
+       }else{
+           HandleListContent(allTasks, navigateToTaskScreen)
+       }
+
     }
 
 

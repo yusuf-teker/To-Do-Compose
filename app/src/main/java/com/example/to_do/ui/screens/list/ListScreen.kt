@@ -19,7 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.example.to_do.R
-import com.example.to_do.components.DisplayAlertDialog
+import com.example.to_do.data.models.Priority
 import com.example.to_do.data.models.ToDoTask
 import com.example.to_do.ui.theme.fabBackgroundColor
 import com.example.to_do.ui.viewmodels.SharedViewModel
@@ -42,6 +42,11 @@ fun ListScreen(
 
     val action: Action by sharedViewModel.action.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val sortState: RequestState<Priority> by sharedViewModel.sortState.collectAsState()
+    val lowPriorityTasks by sharedViewModel.lowPriorityTasks.collectAsState()
+    val highPriorityTasks by sharedViewModel.highPriorityTasks.collectAsState()
+    LaunchedEffect(key1 = true){ sharedViewModel.readSortState() }
 
     DisplaySnackBack(
         snackbarHostState,
@@ -71,6 +76,9 @@ fun ListScreen(
         it
         ListContent(
             allTasks,
+            lowPriorityTasks,
+            highPriorityTasks,
+            sortState,
             saarchTasks,
             searchTextState,
             navigateToTaskScreen,
