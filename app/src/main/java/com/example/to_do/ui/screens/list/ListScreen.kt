@@ -82,6 +82,11 @@ fun ListScreen(
             saarchTasks,
             searchTextState,
             navigateToTaskScreen,
+            onSwipeToDelete = { action, toDoTask ->
+                sharedViewModel.setSelectedTask(toDoTask)
+                sharedViewModel.setAction(action)
+
+            }
         )
     }
 }
