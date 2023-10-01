@@ -1,6 +1,10 @@
 package com.example.to_do.ui.screens.list
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.DismissDirection
 import androidx.compose.material3.DismissDirection.EndToStart
 import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +29,13 @@ import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -46,6 +57,8 @@ import com.example.to_do.ui.theme.taskItemBackgroundColor
 import com.example.to_do.ui.theme.taskItemTitleColor
 import com.example.to_do.util.Action
 import com.example.to_do.util.RequestState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -108,31 +121,57 @@ fun DisplayTasks(
 
 ) {
 
+    //  Todo: Geri eklenen obje listeyi düzeltmiyor(aynı id degerine sahip oldugu icin olabilir)
     LazyColumn(modifier = Modifier.padding(top = TOP_APP_BAR_HEIGHT)) {
         items(taskList.size, key = {
             taskList[it].id
         }) { it ->
             val dismissState = rememberDismissState()
+            val dismissDirection = dismissState.dismissDirection
+            val isDismissed = dismissState.isDismissed(DismissDirection.EndToStart)
+            if (isDismissed && dismissDirection == DismissDirection.EndToStart) {
+                val scope = rememberCoroutineScope()
+                SideEffect {
+                    scope.launch {
+                        delay(300)
+                        onSwipeToDelete(Action.DELETE, taskList[it])
+                    }
+                }
 
-            if (dismissState.isDismissed(direction = EndToStart)) {
-                onSwipeToDelete(Action.DELETE, taskList[it] )
+
             }
             val degrees by animateFloatAsState(
                 targetValue = if (dismissState.targetValue == DismissValue.Default) 0f else -45f,
                 label = ""
             )
 
+            var itemAppeared by remember{ mutableStateOf(false) }//başlangıçta true verilirse unvisible'dan visible'a geçme animasyonasu gözükmez
+            LaunchedEffect(key1 = true, block = {itemAppeared = true})
+            AnimatedVisibility(
+                visible = itemAppeared && !isDismissed,
+                enter = expandVertically(
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
+                ),
+                exit = shrinkHorizontally(
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
+                )
+            ) {
+                SwipeToDismiss(
+                    state = dismissState,
+                    directions = setOf(EndToStart),
+                    background = {
+                        RedBackground(degrees = degrees)
+                    },
 
-            SwipeToDismiss(
-                state = dismissState,
-                directions = setOf(EndToStart),
-                background = {
-                    RedBackground(degrees = degrees)
-                },
+                    dismissContent =  {TaskItem(toDoTask = taskList[it], navigateToTaskScreen = navigateToTaskScreen)},
 
-                dismissContent =  {TaskItem(toDoTask = taskList[it], navigateToTaskScreen = navigateToTaskScreen)},
+                    )
+            }
 
-            )
 
         }
     }
