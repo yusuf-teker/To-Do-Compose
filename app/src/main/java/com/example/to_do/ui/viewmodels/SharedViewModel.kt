@@ -209,6 +209,7 @@ class SharedViewModel @Inject constructor(
         viewModelScope.launch {
             if (_lastDeletedTask.value != null && _action.value == Action.DELETE) {
                 addTask(_lastDeletedTask.value!!)
+                _action.value = Action.NO_ACTION
             }
         }
     }

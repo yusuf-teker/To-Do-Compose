@@ -154,7 +154,7 @@ fun DisplayTasks(
                         durationMillis = 300
                     )
                 ),
-                exit = shrinkHorizontally(
+                exit = shrinkHorizontally (
                     animationSpec = tween(
                         durationMillis = 300
                     )
