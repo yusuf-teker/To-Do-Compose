@@ -34,29 +34,30 @@ fun ListScreen(
     navigateToTaskScreen: (taskId: Int) -> Unit,
     sharedViewModel: SharedViewModel
 ) {
-    LaunchedEffect(key1 = false, block = {sharedViewModel.getAllTask()})
     val allTasks: RequestState<List<ToDoTask>> by sharedViewModel.allTasks.collectAsState()
     val saarchTasks: RequestState<List<ToDoTask>> by sharedViewModel.searchedTasks.collectAsState()
     val searchAppBarState: SearchAppBarState by sharedViewModel.searchAppBarState
     val searchTextState: String by sharedViewModel.searchTextState
-
     val action: Action by sharedViewModel.action.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-
     val sortState: RequestState<Priority> by sharedViewModel.sortState.collectAsState()
     val lowPriorityTasks by sharedViewModel.lowPriorityTasks.collectAsState()
     val highPriorityTasks by sharedViewModel.highPriorityTasks.collectAsState()
-    LaunchedEffect(key1 = true){ sharedViewModel.readSortState() }
+    val snackbarTitle by sharedViewModel.snackbarTitle
+
 
     DisplaySnackBack(
         snackbarHostState,
-        sharedViewModel.newTaskTitle.value,
+        snackbarTitle,
         action,
         onUndoClicked = {
             sharedViewModel.undoLastDeletedTask()
-        }
+        },
+        onActionConsumed = {sharedViewModel.setAction(Action.NO_ACTION) }
     )
+
     Scaffold(
+
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ListAppBar(
@@ -114,7 +115,8 @@ fun DisplaySnackBack(
     snackbarHostState: SnackbarHostState,
     taskTitle: String,
     action: Action,
-    onUndoClicked: () -> Unit
+    onUndoClicked: () -> Unit,
+    onActionConsumed: () -> Unit
 ){
     val scope = rememberCoroutineScope()
     LaunchedEffect(key1 = action){
@@ -128,8 +130,10 @@ fun DisplaySnackBack(
                 if (snackBarResult == SnackbarResult.ActionPerformed && action == Action.DELETE) {
                     onUndoClicked()
                 }
+                if (snackBarResult == SnackbarResult.ActionPerformed){
+                    onActionConsumed()
+                }
             }
-
         }
     }
 }

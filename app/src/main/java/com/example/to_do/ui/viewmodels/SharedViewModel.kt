@@ -42,7 +42,54 @@ class SharedViewModel @Inject constructor(
     private val _sortState = MutableStateFlow<RequestState<Priority>>(RequestState.Idle)
     val sortState: StateFlow<RequestState<Priority>> = _sortState
 
-    fun readSortState() {
+    val lowPriorityTasks: StateFlow<List<ToDoTask>> = toDoRepository.sortByLowPriority.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(), //minimum 1 abone olduğu sürece akış devam eder
+        initialValue = emptyList()
+    )
+    val highPriorityTasks: StateFlow<List<ToDoTask>> = toDoRepository.sortByHighPriority.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = emptyList()
+    )
+
+    private val _allTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
+    val allTasks: StateFlow<RequestState<List<ToDoTask>>> = _allTasks
+
+    private val _searchedTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
+    val searchedTasks: StateFlow<RequestState<List<ToDoTask>>> = _searchedTasks
+
+    private val _selectedTask: MutableStateFlow<RequestState<ToDoTask?>> =
+        MutableStateFlow(RequestState.Idle)
+    val selectedTask: StateFlow<RequestState<ToDoTask?>> = _selectedTask
+
+    private val _lastDeletedTask: MutableStateFlow<ToDoTask?> = MutableStateFlow(null)
+    val lastDeletedTask: StateFlow<ToDoTask?> = _lastDeletedTask
+
+    private val _action = MutableStateFlow(Action.NO_ACTION)
+    val action: StateFlow<Action> = _action
+
+    /* New Task*/
+    private val _newTaskId: MutableState<Int> = mutableIntStateOf(0)
+    val newTaskId: State<Int> = _newTaskId
+
+    private val _newTaskTitle: MutableState<String> = mutableStateOf("")
+    val newTaskTitle: State<String> = _newTaskTitle
+
+    private val _snackbarTitle: MutableState<String> = mutableStateOf("")
+    val snackbarTitle: State<String> = _snackbarTitle
+
+    private val _newTaskDescription: MutableState<String> = mutableStateOf("")
+    val newTaskDescription: State<String> = _newTaskDescription
+
+    private val _newTaskPriority: MutableState<Priority> = mutableStateOf(Priority.NONE)
+    val newTaskPriority: State<Priority> = _newTaskPriority
+    init {
+        getAllTask()
+        readSortState()
+    }
+
+    private fun readSortState() {
 
         try {
             viewModelScope.launch(Dispatchers.IO) {
@@ -65,18 +112,9 @@ class SharedViewModel @Inject constructor(
         }
     }
 
-    val lowPriorityTasks: StateFlow<List<ToDoTask>> = toDoRepository.sortByLowPriority.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(), //minimum 1 abone olduğu sürece akış devam eder
-        initialValue = emptyList()
-    )
 
 
-    val highPriorityTasks: StateFlow<List<ToDoTask>> = toDoRepository.sortByHighPriority.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(),
-        initialValue = emptyList()
-    )
+
 
     fun setSearchTextState(text: String) {
         _searchTextState.value = text
@@ -86,51 +124,23 @@ class SharedViewModel @Inject constructor(
         _searchAppBarState.value = searchAppBarState
     }
 
-    private val _allTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
-    val allTasks: StateFlow<RequestState<List<ToDoTask>>> = _allTasks
 
-    private val _searchedTasks = MutableStateFlow<RequestState<List<ToDoTask>>>(RequestState.Idle)
-    val searchedTasks: StateFlow<RequestState<List<ToDoTask>>> = _searchedTasks
-
-    private val _selectedTask: MutableStateFlow<RequestState<ToDoTask?>> =
-        MutableStateFlow(RequestState.Idle)
-    val selectedTask: StateFlow<RequestState<ToDoTask?>> = _selectedTask
 
     fun setSelectedTask(toDoTask: ToDoTask) {
         _selectedTask.value = RequestState.Success(toDoTask)
     }
 
-    private val _lastDeletedTask: MutableStateFlow<ToDoTask?> = MutableStateFlow(null)
-    val lastDeletedTask: StateFlow<ToDoTask?> = _lastDeletedTask
 
-
-    private val _action = MutableStateFlow<Action>(Action.NO_ACTION)
-    val action: StateFlow<Action> = _action
-
-    /* New Task*/
-    private val _newTaskId: MutableState<Int> = mutableIntStateOf(0)
-    val newTaskId: State<Int> = _newTaskId
-
-    private val _newTaskTitle: MutableState<String> = mutableStateOf("")
-    val newTaskTitle: State<String> = _newTaskTitle
-
-    private val _newTaskDescription: MutableState<String> = mutableStateOf("")
-    val newTaskDescription: State<String> = _newTaskDescription
-
-    private val _newTaskPriority: MutableState<Priority> = mutableStateOf(Priority.NONE)
-    val newTaskPriority: State<Priority> = _newTaskPriority
 
     fun setNewTaskTitle(taskTitle: String) {
         if (taskTitle.length <= Constants.MAX_TASK_TITLE_LENGTH) _newTaskTitle.value = taskTitle
     }
 
-    fun setNewTaskId(taskId: Int) {
-        _newTaskId.value = taskId
-    }
 
     fun setAction(action: Action) {
         _action.value = action
         handleDatabaseAction(action)
+
     }
 
     fun setNewTaskDescription(taskDescription: String) {
@@ -141,21 +151,21 @@ class SharedViewModel @Inject constructor(
         _newTaskPriority.value = taskPriority
     }
 
-    fun clearNewTaskState() {
+    private fun clearNewTaskState() {
         _newTaskId.value = 0
         _newTaskTitle.value = ""
         _newTaskDescription.value = ""
         _newTaskPriority.value = Priority.LOW
     }
 
-    fun updateTaskFields(toDoTask: ToDoTask?) {
+    private fun updateTaskFields(toDoTask: ToDoTask?) {
         clearNewTaskState()
         if (toDoTask != null) { //Existing Task
             fillNewTaskState(toDoTask)
         }
     }
 
-    fun fillNewTaskState(toDoTask: ToDoTask) {
+    private fun fillNewTaskState(toDoTask: ToDoTask) {
         _newTaskId.value = toDoTask.id
         _newTaskTitle.value = toDoTask.title
         _newTaskDescription.value = toDoTask.description
@@ -167,7 +177,7 @@ class SharedViewModel @Inject constructor(
     }/* New Task End*/
 
 
-    fun getAllTask() {
+    private fun getAllTask() {
         //viewModelScope is a coroutine scope which tied to lifecycle of sharedViewModel
         try {
             viewModelScope.launch {
@@ -183,7 +193,7 @@ class SharedViewModel @Inject constructor(
 
     }
 
-    fun addTask() {
+    private fun addTask() {
         viewModelScope.launch {
             if (validateFields()) {
                 toDoRepository.addTask(
@@ -194,6 +204,7 @@ class SharedViewModel @Inject constructor(
                     )
 
                 )
+                _snackbarTitle.value = _newTaskTitle.value
             }
         }
 
@@ -202,6 +213,7 @@ class SharedViewModel @Inject constructor(
     private fun addTask(toDoTask: ToDoTask) {
         viewModelScope.launch {
             toDoRepository.addTask(toDoTask)
+            _snackbarTitle.value = toDoTask.title
         }
     }
 
@@ -214,7 +226,7 @@ class SharedViewModel @Inject constructor(
         }
     }
 
-    fun handleDatabaseAction(action: Action) {
+    private fun handleDatabaseAction(action: Action) {
         Log.d("SharedViewModel", "handleDatabaseAction - action -> $action ")
 
         when (action) {
@@ -246,11 +258,12 @@ class SharedViewModel @Inject constructor(
                 }
 
             }
+            _snackbarTitle.value = _lastDeletedTask.value!!.title
 
         }
     }
 
-    fun deleteAllTask() {
+    private fun deleteAllTask() {
         viewModelScope.launch {
             toDoRepository.deleteAllTask()
         }
@@ -290,7 +303,7 @@ class SharedViewModel @Inject constructor(
 
 
     fun getSelectedTask(taskId: Int) {
-        Log.d("SharedViewModel", "getSelectedTask - taskId -> ${taskId} ")
+        Log.d("SharedViewModel", "getSelectedTask - taskId -> $taskId ")
         try {
             viewModelScope.launch {
                 _selectedTask.value = RequestState.Loading
