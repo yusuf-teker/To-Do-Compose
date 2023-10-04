@@ -3,6 +3,7 @@ package com.example.to_do.ui.screens.task
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +32,10 @@ fun TaskScreen(
     LaunchedEffect(key1 = true){
         sharedViewModel.getSelectedTask(taskId)
 
+    }
+
+    BackHandler{
+        navigateToListScreen(Action.NO_ACTION)
     }
     Scaffold(
         topBar = {

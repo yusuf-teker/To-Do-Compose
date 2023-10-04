@@ -1,17 +1,12 @@
 package com.example.to_do.navigation
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavController
 import com.example.to_do.util.Action
 import com.example.to_do.util.Constants.LIST_SCREEN
 import com.example.to_do.util.Constants.SPLASH_SCREEN
 
 class Screeens(navController: NavController) {
-
-    val splash: () -> Unit = {
-        navController.navigate("list/${Action.NO_ACTION.name}"){
-            popUpTo(SPLASH_SCREEN){inclusive = true}
-        }
-    }
 
     //navigate to list
     val task: (Action) -> Unit = { action ->
