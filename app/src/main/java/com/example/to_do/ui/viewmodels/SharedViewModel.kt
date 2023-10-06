@@ -220,7 +220,16 @@ class SharedViewModel @Inject constructor(
     private fun undoTask() {
         viewModelScope.launch {
             if (_lastDeletedTask.value != null && _action.value == Action.DELETE) {
-                addTask(_lastDeletedTask.value!!)
+                val item = _lastDeletedTask.value
+                item?.let {
+                    addTask(
+                        ToDoTask(
+                            title = item.title,
+                            description = item.description,
+                            priority = item.priority
+                        )
+                    )
+                }
                 _action.value = Action.NO_ACTION
             }
         }
